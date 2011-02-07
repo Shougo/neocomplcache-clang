@@ -3,6 +3,7 @@
 " File: clang_complete.vim
 " Author: Xavier Deguillard <deguilx@gmail.com>
 " Modified by: eagletmt <eagletmt@gmail.com>
+"              Shougo Matsushita <Shougo.Matsu At gmail.com>
 "
 " Description: Use of clang to complete in C/C++.
 "
@@ -134,13 +135,13 @@ function! s:ClangQuickFix(clang_output)
 endfunction
 
 function! s:DemangleProto(prototype)
-    let l:proto = substitute(a:prototype, '[#', "", "g")
-    let l:proto = substitute(l:proto, '#]', ' ', "g")
-    let l:proto = substitute(l:proto, '#>', "", "g")
-    let l:proto = substitute(l:proto, '<#', "", "g")
+    let l:proto = substitute(a:prototype, '[#', '', 'g')
+    let l:proto = substitute(l:proto, '#]', ' ', 'g')
+    let l:proto = substitute(l:proto, '#>', '', 'g')
+    let l:proto = substitute(l:proto, '<#', '', 'g')
     " TODO: add a candidate for each optional parameter
-    let l:proto = substitute(l:proto, '{#', "", "g")
-    let l:proto = substitute(l:proto, '#}', "", "g")
+    let l:proto = substitute(l:proto, '{#', '', 'g')
+    let l:proto = substitute(l:proto, '#}', '', 'g')
 
     return l:proto
 endfunction
@@ -173,14 +174,17 @@ function! s:source.get_complete_words(cur_keyword_pos, cur_keyword_str)
 
     let l:buf = getline(1, '$')
     let l:tempfile = expand('%:p:h') . '/' . localtime() . expand('%:t')
+    if neocomplcache#is_win()
+      let l:tempfile = substitute(l:tempfile, '\\', '/', 'g')
+    endif
     call writefile(l:buf, l:tempfile)
     let l:escaped_tempfile = shellescape(l:tempfile)
 
-    let l:command = b:clang_exec . " -cc1 -fsyntax-only -code-completion-at="
+    let l:command = b:clang_exec . ' -cc1 -fsyntax-only -code-completion-at='
                 \ . l:escaped_tempfile . ":" . line('.') . ":" . (a:cur_keyword_pos+1)
-                \ . " " . l:escaped_tempfile
-                \ . " " . b:clang_parameters . " " . b:clang_user_options . " -o -"
-    let l:clang_output = split(neocomplcache#system(l:command), "\n")
+                \ . ' ' . l:escaped_tempfile
+                \ . ' ' . b:clang_parameters . ' ' . b:clang_user_options . ' -o -'
+    let l:clang_output = split(neocomplcache#system(l:command), '\n')
     call delete(l:tempfile)
     if v:shell_error
         call s:ClangQuickFix(l:clang_output)
@@ -229,16 +233,16 @@ function! s:source.get_complete_words(cur_keyword_pos, cur_keyword_str)
             let l:word = substitute(l:value, '.*<#', "", "g")
             let l:word = substitute(l:word, '#>.*', "", "g")
             let l:proto = s:DemangleProto(l:value)
-            let l:kind = ""
+            let l:kind = ''
 
         else
             continue
         endif
 
         let l:item = {
-                    \ "word": l:word,
-                    \ "menu": '[clang] ' . l:proto,
-                    \ "dup": 1,
+                    \ 'word': l:word,
+                    \ 'menu': '[clang] ' . l:proto,
+                    \ 'dup': 1,
                     \ }
 
         call add(l:list, l:item)
