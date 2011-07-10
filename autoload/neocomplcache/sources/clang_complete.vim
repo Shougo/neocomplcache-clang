@@ -32,9 +32,9 @@ let s:source = {
 function s:ClangCompleteInit()
     let b:should_overload = 0
 
-    let l:local_conf = findfile(".clang_complete", '.;')
+    let l:local_conf = findfile('.clang_complete', '.;')
     let b:clang_user_options = ''
-    if l:local_conf != ""
+    if l:local_conf != ''
         let l:opts = readfile(l:local_conf)
         for l:opt in l:opts
             " Better handling of absolute path
@@ -47,9 +47,14 @@ function s:ClangCompleteInit()
                 let l:opt = substitute(l:opt, '-I\s*\(\%(\w\|\\\s\)*\)',
                             \ '-I' . l:local_conf[:-16] . '\1', "g")
             endif
-            let b:clang_user_options .= " " . l:opt
+            let b:clang_user_options .= ' ' . l:opt
         endfor
     endif
+    " for l:filename in split(&path, '[,;]')
+    "   if l:filename != ''
+    "     let b:clang_user_options .= ' -I' . l:filename
+    "   endif
+    " endfor
 
     if !exists('g:clang_complete_copen')
         let g:clang_complete_copen = 0
@@ -69,7 +74,6 @@ function s:ClangCompleteInit()
     if expand('%:e') =~ 'h*'
         let b:clang_parameters .= '-header'
     endif
-
 endfunction
 
 function! s:get_kind(proto)
@@ -95,6 +99,8 @@ function! s:source.initialize()
     if &l:filetype == 'c' || &l:filetype == 'cpp' || &l:filetype == 'objc' || &l:filetype == 'objcpp'
         call s:ClangCompleteInit()
     endif
+
+    call neocomplcache#set_completion_length('clang_complete', 0)
 endfunction
 
 function! s:source.finalize()
@@ -168,6 +174,8 @@ endfunction
 
 function! s:source.get_complete_words(cur_keyword_pos, cur_keyword_str)
     if neocomplcache#is_auto_complete()
+          \ && getline('.') !~ '\%(->\|\.\|::\)$'
+          " \ && len(a:cur_keyword_str) < g:neocomplcache_auto_completion_start_length
         " auto complete is very slow!
         return []
     endif
@@ -253,3 +261,5 @@ endfunction
 function! neocomplcache#sources#clang_complete#define()
     return s:source
 endfunction
+
+" vim: expandtab:ts=4:sts=4:sw=4
