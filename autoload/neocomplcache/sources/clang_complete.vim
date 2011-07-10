@@ -23,13 +23,48 @@
 "       - Add snippets on Pattern and OVERLOAD (is it possible?)
 "
 
+" Variables initialize.
+if !exists('g:neocomplcache_clang_complete_use_library')
+  let g:neocomplcache_clang_complete_use_library = 0
+endif
+if !exists('g:neocomplcache_clang_complete_macros')
+    let g:neocomplcache_clang_complete_macros = 0
+endif
+if !exists('g:neocomplcache_clang_complete_patterns')
+    let g:neocomplcache_clang_complete_patterns = 0
+endif
+if !exists('g:neocomplcache_clang_complete_user_options')
+    let g:neocomplcache_clang_complete_user_options = ''
+endif
+
 let s:source = {
       \ 'name': 'clang_complete',
       \ 'kind': 'ftplugin',
       \ 'filetypes': { 'c': 1, 'cpp': 1, 'objc': 1, 'objcpp': 1 },
       \ }
 
-function s:ClangCompleteInit()
+" Store plugin path, as this is available only when sourcing the file,
+" not during a function call.
+let s:plugin_path = escape(expand('<sfile>:p:h'), '\')
+
+function! s:init_ClangCompletePython()
+  python import sys
+
+  if exists('g:neocomplcache_clang_complete_library_path')
+    " Load the library from the given library path.
+    execute 'python sys.argv = ["' . escape(g:neocomplcache_clang_complete_library_path, '\') . '"]'
+  else
+    " By setting argv[0] to '' force the python bindings to load the library
+    " from the normal system search path.
+    python sys.argv[0] = ''
+  endif
+
+  execute 'python sys.path = ["' . s:plugin_path . '/clang_complete"] + sys.path'
+  execute 'pyfile ' . s:plugin_path . '/clang_complete/libclang.py'
+  python initClangComplete(vim.eval('g:neocomplcache_clang_complete_lib_flags'))
+endfunction
+
+function! s:init_ClangComplete()
     let b:should_overload = 0
 
     let l:local_conf = findfile('.clang_complete', '.;')
@@ -82,6 +117,29 @@ function s:ClangCompleteInit()
     if expand('%:e') =~ 'h*'
         let b:clang_parameters .= '-header'
     endif
+
+    let g:neocomplcache_clang_complete_lib_flags = 0
+    if g:neocomplcache_clang_complete_macros
+        let b:clang_parameters .= ' -code-completion-macros'
+        let g:neocomplcache_clang_complete_lib_flags = 1
+    endif
+    if g:neocomplcache_clang_complete_patterns
+        let b:clang_parameters .= ' -code-completion-patterns'
+        let g:clang_complete_lib_flags += 2
+    endif
+
+    " Load the python bindings of libclang.
+    if g:neocomplcache_clang_complete_use_library
+      if has('python')
+        call s:init_ClangCompletePython()
+      else
+        echoe 'clang_complete: No python support available.'
+        echoe 'Cannot use clang library, using executable'
+        echoe 'Compile vim with python support to use libclang'
+        let g:neocomplcache_clang_complete_use_library = 0
+        return
+      endif
+    endif
 endfunction
 
 function! s:get_kind(proto)
@@ -103,9 +161,9 @@ function! s:get_kind(proto)
 endfunction
 
 function! s:source.initialize()
-    au neocomplcache FileType c,cpp,objc,objcpp call s:ClangCompleteInit()
+    autocmd neocomplcache FileType c,cpp,objc,objcpp call s:init_ClangComplete()
     if &l:filetype == 'c' || &l:filetype == 'cpp' || &l:filetype == 'objc' || &l:filetype == 'objcpp'
-        call s:ClangCompleteInit()
+        call s:init_ClangComplete()
     endif
 
     call neocomplcache#set_completion_length('clang_complete', 0)
@@ -188,26 +246,17 @@ function! s:source.get_complete_words(cur_keyword_pos, cur_keyword_str)
         return []
     endif
 
-    let l:buf = getline(1, '$')
-    let l:tempfile = expand('%:p:h') . '/' . localtime() . expand('%:t')
-    if neocomplcache#is_win()
-      let l:tempfile = substitute(l:tempfile, '\\', '/', 'g')
+    if g:neocomplcache_clang_complete_use_library
+        python vim.command('let l:clang_output = ' + str(getCurrentCompletions(vim.eval('a:cur_keyword_str'), vim.eval('a:cur_keyword_pos+1'))))
+        " echomsg string(l:clang_output)
+    else
+        let l:clang_output = s:complete_from_clang_binary(a:cur_keyword_pos)
     endif
-    call writefile(l:buf, l:tempfile)
-    let l:escaped_tempfile = shellescape(l:tempfile)
-
-    let l:command = b:clang_exec . ' -cc1 -fsyntax-only'
-          \ . ' -fno-caret-diagnostics -fdiagnostics-print-source-range-info'
-          \ . ' -code-completion-at='
-          \ . l:escaped_tempfile . ":" . line('.') . ":" . (a:cur_keyword_pos+1)
-          \ . ' ' . l:escaped_tempfile
-          \ . ' ' . b:clang_parameters . ' ' . b:clang_user_options . ' -o -'
-    let l:clang_output = split(neocomplcache#system(l:command), '\n')
-    call delete(l:tempfile)
     if v:shell_error
         call s:ClangQuickFix(l:clang_output)
         return []
     endif
+
     if l:clang_output == []
         return []
     endif
@@ -266,6 +315,28 @@ function! s:source.get_complete_words(cur_keyword_pos, cur_keyword_str)
         call add(l:list, l:item)
     endfor
     return l:list
+endfunction
+
+function! s:complete_from_clang_binary(cur_keyword_pos)
+    let l:buf = getline(1, '$')
+    let l:tempfile = expand('%:p:h') . '/' . localtime() . expand('%:t')
+    if neocomplcache#is_win()
+        let l:tempfile = substitute(l:tempfile, '\\', '/', 'g')
+    endif
+    call writefile(l:buf, l:tempfile)
+    let l:escaped_tempfile = shellescape(l:tempfile)
+
+    let l:command = b:clang_exec . ' -cc1 -fsyntax-only'
+                \ . ' -fno-caret-diagnostics -fdiagnostics-print-source-range-info'
+                \ . ' -code-completion-at='
+                \ . l:escaped_tempfile . ":" . line('.') . ":" . (a:cur_keyword_pos+1)
+                \ . ' ' . l:escaped_tempfile
+                \ . ' ' . b:clang_parameters . ' ' . b:clang_user_options . ' ' . g:neocomplcache_clang_complete_user_options
+    let l:clang_output = split(neocomplcache#system(l:command), '\n')
+
+    call delete(l:tempfile)
+
+    return l:clang_output
 endfunction
 
 function! neocomplcache#sources#clang_complete#define()
