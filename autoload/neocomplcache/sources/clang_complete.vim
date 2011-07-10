@@ -50,9 +50,17 @@ function s:ClangCompleteInit()
             let b:clang_user_options .= ' ' . l:opt
         endfor
     endif
-    " for l:filename in split(&path, '[,;]')
-    "   if l:filename != ''
-    "     let b:clang_user_options .= ' -I' . l:filename
+
+    " Auto parse 'path' option.
+    " let l:dirs = split(&path, '[;,]')
+    " for l:dir in l:dirs
+    "   if l:dir == '' || !isdirectory(l:dir)
+    "     continue
+    "   endif
+
+    "   " Add only absolute path.
+    "   if matchstr(l:dir, '\s*/') != ''
+    "     let b:clang_user_options .= ' -I' . l:dir
     "   endif
     " endfor
 
@@ -188,10 +196,12 @@ function! s:source.get_complete_words(cur_keyword_pos, cur_keyword_str)
     call writefile(l:buf, l:tempfile)
     let l:escaped_tempfile = shellescape(l:tempfile)
 
-    let l:command = b:clang_exec . ' -cc1 -fsyntax-only -code-completion-at='
-                \ . l:escaped_tempfile . ":" . line('.') . ":" . (a:cur_keyword_pos+1)
-                \ . ' ' . l:escaped_tempfile
-                \ . ' ' . b:clang_parameters . ' ' . b:clang_user_options . ' -o -'
+    let l:command = b:clang_exec . ' -cc1 -fsyntax-only'
+          \ . ' -fno-caret-diagnostics -fdiagnostics-print-source-range-info'
+          \ . ' -code-completion-at='
+          \ . l:escaped_tempfile . ":" . line('.') . ":" . (a:cur_keyword_pos+1)
+          \ . ' ' . l:escaped_tempfile
+          \ . ' ' . b:clang_parameters . ' ' . b:clang_user_options . ' -o -'
     let l:clang_output = split(neocomplcache#system(l:command), '\n')
     call delete(l:tempfile)
     if v:shell_error
