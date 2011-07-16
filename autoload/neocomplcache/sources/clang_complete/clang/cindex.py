@@ -928,7 +928,7 @@ class TranslationUnit(ClangObject):
                 unsaved_files_array[i].contents = value
                 unsaved_files_array[i].length = len(value)
         ptr = TranslationUnit_codeComplete(self, path,
-                                           line, column,
+                                           int(line), int(column),
                                            unsaved_files_array,
                                            len(unsaved_files),
                                            options)
