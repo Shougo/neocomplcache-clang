@@ -232,6 +232,8 @@ def getCurrentCompletions(base, column):
   # priority = vim.eval("g:clang_sort_algo") == 'priority'
   priority = True
   line = int(vim.eval("line('.')"))
+  if base is None:
+    base = ''
 
   cr = getCurrentCompletionResults(line, column)
   if cr is None:

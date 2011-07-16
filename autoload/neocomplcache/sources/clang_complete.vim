@@ -255,75 +255,13 @@ function! s:source.get_complete_words(cur_keyword_pos, cur_keyword_str)
     endif
 
     if g:neocomplcache_clang_complete_use_library
-        python vim.command('let l:clang_output = ' + str(getCurrentCompletions(int(vim.eval('a:cur_keyword_str')), int(vim.eval('a:cur_keyword_pos+1')))))
-        " python vim.command('let l:clang_output = ' + str(getCurrentCompletions("", vim.eval('a:cur_keyword_pos+1'))))
+        python vim.command('let l:clang_output = ' + str(getCurrentCompletions(vim.eval('a:cur_keyword_str'), int(vim.eval('a:cur_keyword_pos+1')))))
         " echomsg string(l:clang_output)
     else
         let l:clang_output = s:complete_from_clang_binary(a:cur_keyword_pos)
     endif
-    if v:shell_error
-        call s:ClangQuickFix(l:clang_output)
-        return []
-    endif
 
-    if l:clang_output == []
-        return []
-    endif
-    let l:list = []
-    for l:line in l:clang_output
-        if l:line[:11] == 'COMPLETION: ' && b:should_overload != 1
-            let l:value = l:line[12:]
-
-            if l:value !~ '^' . a:cur_keyword_str
-                continue
-            endif
-
-            " We can do something smarter for Pattern.
-            " My idea is to have some sort of snippets.
-            " It could be great if it can be done.
-            if l:value =~ 'Pattern'
-                let l:value = l:value[10:]
-            endif
-
-            let l:colonidx = stridx(l:value, " : ")
-            if l:colonidx == -1
-                let l:word = s:DemangleProto(l:value)
-                let l:proto = l:value
-            else
-                let l:word = l:value[:l:colonidx - 1]
-                let l:proto = l:value[l:colonidx + 3:]
-            endif
-
-            " WTF is that?
-            if l:word =~ '(Hidden)'
-                let l:word = l:word[:-10]
-            endif
-
-            let l:kind = s:get_kind(l:proto)
-            let l:proto = s:DemangleProto(l:proto)
-
-        elseif l:line[:9] == 'OVERLOAD: ' && b:should_overload == 1
-
-            " The comment on Pattern also apply here.
-            let l:value = l:line[10:]
-            let l:word = substitute(l:value, '.*<#', "", "g")
-            let l:word = substitute(l:word, '#>.*', "", "g")
-            let l:proto = s:DemangleProto(l:value)
-            let l:kind = ''
-
-        else
-            continue
-        endif
-
-        let l:item = {
-                    \ 'word': l:word,
-                    \ 'menu': '[clang] ' . l:proto,
-                    \ 'dup': 1,
-                    \ }
-
-        call add(l:list, l:item)
-    endfor
-    return l:list
+    return l:clang_output
 endfunction
 
 function! s:complete_from_clang_binary(cur_keyword_pos)
@@ -345,7 +283,66 @@ function! s:complete_from_clang_binary(cur_keyword_pos)
 
     call delete(l:tempfile)
 
-    return l:clang_output
+    let l:filter_str = "v:val =~ '^COMPLETION: " . a:base . "\\|^OVERLOAD: '"
+    call filter(l:clang_output, l:filter_str)
+
+    let l:res = []
+    for l:line in l:clang_output
+
+        if l:line[:11] == 'COMPLETION: ' && b:should_overload != 1
+
+            let l:value = l:line[12:]
+
+            let l:colonidx = stridx(l:value, ' : ')
+            if l:colonidx == -1
+                let l:wabbr = s:DemangleProto(l:value)
+                let l:word = l:value
+                let l:proto = l:value
+            else
+                let l:word = l:value[:l:colonidx - 1]
+                " WTF is that?
+                if l:word =~ '(Hidden)'
+                    let l:word = l:word[:-10]
+                endif
+                let l:wabbr = l:word
+                let l:proto = l:value[l:colonidx + 3:]
+            endif
+
+            let l:kind = s:GetKind(l:proto)
+            if l:kind == 't' && b:clang_complete_type == 0
+                continue
+            endif
+
+            let l:word = l:wabbr
+            let l:proto = s:DemangleProto(l:proto)
+
+        elseif l:line[:9] == 'OVERLOAD: ' && b:should_overload == 1
+
+            let l:value = l:line[10:]
+            if match(l:value, '<#') == -1
+                continue
+            endif
+            let l:word = substitute(l:value, '.*<#', '<#', 'g')
+            let l:word = substitute(l:word, '#>.*', '#>', 'g')
+            let l:wabbr = substitute(l:word, '<#\([^#]*\)#>', '\1', 'g')
+            let l:proto = s:DemangleProto(l:value)
+            let l:kind = ''
+        else
+            continue
+        endif
+
+        let l:item = {
+                    \ 'word': l:word,
+                    \ 'abbr': l:wabbr,
+                    \ 'menu': l:proto,
+                    \ 'info': l:proto,
+                    \ 'dup': 1,
+                    \ 'kind': l:kind }
+
+        call add(l:res, l:item)
+    endfor
+
+    return l:res
 endfunction
 
 function! neocomplcache#sources#clang_complete#define()
