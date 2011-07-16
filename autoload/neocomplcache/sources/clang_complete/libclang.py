@@ -191,7 +191,7 @@ def getCurrentCompletionResults(line, column):
   return cr
 
 def completeCurrentAt(line, column):
-  print "\n".join(map(str, getCurrentCompletionResults().results))
+  print "\n".join(map(str, getCurrentCompletionResults(line, column).results))
 
 def formatChunkForWord(chunk):
   return chunk.spelling

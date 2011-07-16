@@ -255,7 +255,7 @@ function! s:source.get_complete_words(cur_keyword_pos, cur_keyword_str)
     endif
 
     if g:neocomplcache_clang_complete_use_library
-        python vim.command('let l:clang_output = ' + str(getCurrentCompletions(vim.eval('a:cur_keyword_str'), vim.eval('a:cur_keyword_pos+1'))))
+        python vim.command('let l:clang_output = ' + str(getCurrentCompletions(int(vim.eval('a:cur_keyword_str')), int(vim.eval('a:cur_keyword_pos+1')))))
         " echomsg string(l:clang_output)
     else
         let l:clang_output = s:complete_from_clang_binary(a:cur_keyword_pos)
