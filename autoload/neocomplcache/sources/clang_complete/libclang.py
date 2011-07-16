@@ -46,7 +46,7 @@ def getCurrentFile():
   return (vim.current.buffer.name, file)
 
 def getCurrentTranslationUnit(update = False):
-  userOptionsGlobal = splitOptions(vim.eval("g:neocomplcache_clang_complete_user_options"))
+  userOptionsGlobal = splitOptions(vim.eval("g:neocomplcache_clang_user_options"))
   userOptionsLocal = splitOptions(vim.eval("b:clang_user_options"))
   args = userOptionsGlobal + userOptionsLocal
 
@@ -174,8 +174,7 @@ def getCurrentQuickFixList():
 
 def updateCurrentDiagnostics():
   global debug
-  # debug = int(vim.eval("g:clang_debug")) == 1
-  debug = 0
+  debug = int(vim.eval("g:neocomplcache_clang_debug")) == 1
   getCurrentTranslationUnit(update = True)
 
 def getCurrentCompletionResults(line, column):
@@ -227,8 +226,7 @@ def formatResult(result):
 
 def getCurrentCompletions(base, column):
   global debug
-  # debug = int(vim.eval("g:clang_debug")) == 1
-  debug = False
+  debug = int(vim.eval("g:neocomplcache_clang_debug")) == 1
   # priority = vim.eval("g:clang_sort_algo") == 'priority'
   priority = True
   line = int(vim.eval("line('.')"))
