@@ -14,11 +14,6 @@
 "                absolute include path on the same line. It is not
 "                currently correctly handled.
 "
-" Options: g:clang_complete_copen: if equal to 1, open quickfix window
-"                                  on error. WARNING: segfault on
-"                                  unpatched vim!
-"                                  Default: 0
-"
 " Todo: - Fix bugs
 "       - Add snippets on Pattern and OVERLOAD (is it possible?)
 "
@@ -32,6 +27,9 @@ if !exists('g:neocomplcache_clang_complete_macros')
 endif
 if !exists('g:neocomplcache_clang_complete_patterns')
     let g:neocomplcache_clang_complete_patterns = 0
+endif
+if !exists('g:neocomplcache_clang_complete_auto_options')
+    let g:neocomplcache_clang_complete_auto_options = 'path, .clang_complete'
 endif
 if !exists('g:neocomplcache_clang_complete_user_options')
     let g:neocomplcache_clang_complete_user_options = ''
@@ -67,41 +65,7 @@ endfunction
 function! s:init_ClangComplete()
     let b:should_overload = 0
 
-    let l:local_conf = findfile('.clang_complete', '.;')
-    let b:clang_user_options = ''
-    if l:local_conf != ''
-        let l:opts = readfile(l:local_conf)
-        for l:opt in l:opts
-            " Better handling of absolute path
-            " I don't know if those pattern will work on windows
-            " platform
-            if matchstr(l:opt, '-I\s*/') != ""
-                let l:opt = substitute(l:opt, '-I\s*\(/\%(\w\|\\\s\)*\)',
-                            \ '-I' . '\1', "g")
-            else
-                let l:opt = substitute(l:opt, '-I\s*\(\%(\w\|\\\s\)*\)',
-                            \ '-I' . l:local_conf[:-16] . '\1', "g")
-            endif
-            let b:clang_user_options .= ' ' . l:opt
-        endfor
-    endif
-
-    " Auto parse 'path' option.
-    " let l:dirs = split(&path, '[;,]')
-    " for l:dir in l:dirs
-    "   if l:dir == '' || !isdirectory(l:dir)
-    "     continue
-    "   endif
-
-    "   " Add only absolute path.
-    "   if matchstr(l:dir, '\s*/') != ''
-    "     let b:clang_user_options .= ' -I' . l:dir
-    "   endif
-    " endfor
-
-    if !exists('g:clang_complete_copen')
-        let g:clang_complete_copen = 0
-    endif
+    call LoadUserOptions()
 
     let b:clang_exec = 'clang'
     let b:clang_parameters = '-x c'
@@ -140,6 +104,59 @@ function! s:init_ClangComplete()
         return
       endif
     endif
+endfunction
+
+function! LoadUserOptions()
+    let b:clang_user_options = ''
+
+    let l:option_sources = split(g:neocomplcache_clang_complete_auto_options, ',')
+    let l:remove_spaces_cmd = 'substitute(v:val, "\\s*\\(.*\\)\\s*", "\\1", "")'
+    let l:option_sources = map(l:option_sources, l:remove_spaces_cmd)
+
+    for l:source in l:option_sources
+        if l:source == 'path'
+            call s:parsePathOption()
+        elseif l:source == '.clang_complete'
+            call s:parseConfig()
+        endif
+    endfor
+endfunction
+
+function! s:parseConfig()
+    let l:local_conf = findfile('.clang_complete', '.;')
+    if l:local_conf == '' || !filereadable(l:local_conf)
+        return
+    endif
+
+    let l:opts = readfile(l:local_conf)
+    for l:opt in l:opts
+        " Better handling of absolute path
+        " I don't know if those pattern will work on windows
+        " platform
+        if matchstr(l:opt, '\C-I\s*/') != ''
+            let l:opt = substitute(l:opt, '\C-I\s*\(/\%(\w\|\\\s\)*\)',
+                        \ '-I' . '\1', 'g')
+        else
+            let l:opt = substitute(l:opt, '\C-I\s*\(\%(\w\|\\\s\)*\)',
+                        \ '-I' . l:local_conf[:-16] . '\1', 'g')
+        endif
+        let b:clang_user_options .= ' ' . l:opt
+    endfor
+endfunction
+
+function! s:parsePathOption()
+    let l:dirs = split(&path, ',')
+    for l:dir in l:dirs
+        if len(l:dir) == 0 || !isdirectory(l:dir)
+            continue
+        endif
+
+        " Add only absolute paths
+        if matchstr(l:dir, '\s*/') != ''
+            let l:opt = '-I' . l:dir
+            let b:clang_user_options .= ' ' . l:opt
+        endif
+    endfor
 endfunction
 
 function! s:get_kind(proto)
@@ -195,15 +212,6 @@ function! s:ClangQuickFix(clang_output)
         let l:list = add(l:list, l:item)
     endfor
     call setqflist(l:list)
-    " The following line cause vim to segfault. A patch is ready on vim
-    " mailing list but not currently upstream, I will update it as soon
-    " as it's upstream. If you want to have error reporting will you're
-    " coding, you could open at hand the quickfix window, and it will be
-    " updated.
-    " http://groups.google.com/group/vim_dev/browse_thread/thread/5ff146af941b10da
-    if g:clang_complete_copen == 1
-        copen
-    endif
 endfunction
 
 function! s:DemangleProto(prototype)

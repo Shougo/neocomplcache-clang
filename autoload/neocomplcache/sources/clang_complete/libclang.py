@@ -228,9 +228,9 @@ def formatResult(result):
 def getCurrentCompletions(base, column):
   global debug
   # debug = int(vim.eval("g:clang_debug")) == 1
-  debug = 0
+  debug = False
   # priority = vim.eval("g:clang_sort_algo") == 'priority'
-  priority = 'priority'
+  priority = True
   line = int(vim.eval("line('.')"))
 
   cr = getCurrentCompletionResults(line, column)
