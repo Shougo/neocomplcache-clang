@@ -258,13 +258,13 @@ function! s:source.get_complete_words(cur_keyword_pos, cur_keyword_str)
         python vim.command('let l:clang_output = ' + str(getCurrentCompletions(vim.eval('a:cur_keyword_str'), int(vim.eval('a:cur_keyword_pos+1')))))
         " echomsg string(l:clang_output)
     else
-        let l:clang_output = s:complete_from_clang_binary(a:cur_keyword_pos)
+        let l:clang_output = s:complete_from_clang_binary(a:cur_keyword_pos, a:cur_keyword_str)
     endif
 
     return l:clang_output
 endfunction
 
-function! s:complete_from_clang_binary(cur_keyword_pos)
+function! s:complete_from_clang_binary(cur_keyword_pos, cur_keyword_str)
     let l:buf = getline(1, '$')
     let l:tempfile = expand('%:p:h') . '/' . localtime() . expand('%:t')
     if neocomplcache#is_win()
@@ -283,7 +283,7 @@ function! s:complete_from_clang_binary(cur_keyword_pos)
 
     call delete(l:tempfile)
 
-    let l:filter_str = "v:val =~ '^COMPLETION: " . a:base . "\\|^OVERLOAD: '"
+    let l:filter_str = "v:val =~ '^COMPLETION: " . a:cur_keyword_str . "\\|^OVERLOAD: '"
     call filter(l:clang_output, l:filter_str)
 
     let l:res = []
