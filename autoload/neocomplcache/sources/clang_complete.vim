@@ -261,13 +261,13 @@ function! s:source.get_complete_words(cur_keyword_pos, cur_keyword_str)
         python vim.command('let l:clang_output = ' + str(getCurrentCompletions(vim.eval('a:cur_keyword_str'), int(vim.eval('a:cur_keyword_pos+1')))))
         " echomsg string(l:clang_output)
     else
-        let l:clang_output = s:complete_from_clang_binary(a:cur_keyword_pos)
+        let l:clang_output = s:complete_from_clang_binary(a:cur_keyword_pos, a:cur_keyword_str)
     endif
 
     return l:clang_output
 endfunction
 
-function! s:complete_from_clang_binary(cur_keyword_pos)
+function! s:complete_from_clang_binary(cur_keyword_pos, cur_keyword_str)
     let l:buf = getline(1, '$')
     let l:tempfile = expand('%:p:h') . '/' . localtime() . expand('%:t')
     if neocomplcache#is_win()
@@ -286,7 +286,7 @@ function! s:complete_from_clang_binary(cur_keyword_pos)
 
     call delete(l:tempfile)
 
-    let l:filter_str = "v:val =~ '^COMPLETION: " . a:base . "\\|^OVERLOAD: '"
+    let l:filter_str = "v:val =~ '^COMPLETION: " . a:cur_keyword_str . "\\|^OVERLOAD: '"
     call filter(l:clang_output, l:filter_str)
 
     let l:res = []
@@ -312,7 +312,7 @@ function! s:complete_from_clang_binary(cur_keyword_pos)
             endif
 
             let l:kind = s:GetKind(l:proto)
-            if l:kind == 't' && b:clang_complete_type == 0
+            if l:kind == 't' && getline('.') =~ '\%(->\|\.\|::\)$'
                 continue
             endif
 
@@ -346,6 +346,33 @@ function! s:complete_from_clang_binary(cur_keyword_pos)
     endfor
 
     return l:res
+endfunction
+
+function! s:GetKind(proto)
+  if a:proto == ''
+    return 't'
+  endif
+  let l:ret = match(a:proto, '^\[#')
+  let l:params = match(a:proto, '(')
+  if l:ret == -1 && l:params == -1
+    return 't'
+  endif
+  if l:ret != -1 && l:params == -1
+    return 'v'
+  endif
+  if l:params != -1
+    return 'f'
+  endif
+  return 'm'
+endfunction
+
+function! s:DemangleProto(prototype)
+  let l:proto = substitute(a:prototype, '[#', '', 'g')
+  let l:proto = substitute(l:proto, '#]', ' ', 'g')
+  let l:proto = substitute(l:proto, '#>', '', 'g')
+  let l:proto = substitute(l:proto, '<#', '', 'g')
+  let l:proto = substitute(l:proto, '{#.*#}', '', 'g')
+  return l:proto
 endfunction
 
 function! neocomplcache#sources#clang_complete#define()
