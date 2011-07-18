@@ -309,7 +309,7 @@ function! s:complete_from_clang_binary(cur_keyword_pos, cur_keyword_str)
             endif
 
             let l:kind = s:GetKind(l:proto)
-            if l:kind == 't' && b:clang_complete_type == 0
+            if l:kind == 't' && getline('.') =~ '\%(->\|\.\|::\)$'
                 continue
             endif
 
@@ -343,6 +343,33 @@ function! s:complete_from_clang_binary(cur_keyword_pos, cur_keyword_str)
     endfor
 
     return l:res
+endfunction
+
+function! s:GetKind(proto)
+  if a:proto == ''
+    return 't'
+  endif
+  let l:ret = match(a:proto, '^\[#')
+  let l:params = match(a:proto, '(')
+  if l:ret == -1 && l:params == -1
+    return 't'
+  endif
+  if l:ret != -1 && l:params == -1
+    return 'v'
+  endif
+  if l:params != -1
+    return 'f'
+  endif
+  return 'm'
+endfunction
+
+function! s:DemangleProto(prototype)
+  let l:proto = substitute(a:prototype, '[#', '', 'g')
+  let l:proto = substitute(l:proto, '#]', ' ', 'g')
+  let l:proto = substitute(l:proto, '#>', '', 'g')
+  let l:proto = substitute(l:proto, '<#', '', 'g')
+  let l:proto = substitute(l:proto, '{#.*#}', '', 'g')
+  return l:proto
 endfunction
 
 function! neocomplcache#sources#clang_complete#define()
