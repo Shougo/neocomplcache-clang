@@ -68,7 +68,7 @@ endfunction
 function! s:init_ClangComplete()
     let b:should_overload = 0
 
-    call LoadUserOptions()
+    call s:loadUserOptions()
 
     let b:clang_exec = 'clang'
     let b:clang_parameters = '-x c'
@@ -109,7 +109,7 @@ function! s:init_ClangComplete()
     endif
 endfunction
 
-function! LoadUserOptions()
+function! s:loadUserOptions()
     let b:clang_user_options = ''
 
     let l:option_sources = split(g:neocomplcache_clang_auto_options, ',')
