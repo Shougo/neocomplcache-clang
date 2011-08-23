@@ -76,11 +76,11 @@ def get_cindex_library():
     if path != '':
         path += '/'
     if name == 'Darwin':
-        path += 'clang.dylib'
+        path += 'libclang.dylib'
     elif name == 'Windows':
         path += 'clang.dll'
     else:
-        path += 'clang.so'
+        path += 'libclang.so'
     return cdll.LoadLibrary(path)
 
 # ctypes doesn't implicitly convert c_void_p to the appropriate wrapper
