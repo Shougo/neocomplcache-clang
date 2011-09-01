@@ -257,12 +257,18 @@ function! s:source.get_keyword_pos(cur_text)
 endfunction
 
 function! s:source.get_complete_words(cur_keyword_pos, cur_keyword_str)
+    let l:cur_text = neocomplcache#get_cur_text()
+    let l:line = getline('.')
+    call setline('.', l:cur_text)
+
     if g:neocomplcache_clang_use_library
         python vim.command('let l:clang_output = ' + str(getCurrentCompletions(vim.eval('a:cur_keyword_str'), int(vim.eval('a:cur_keyword_pos+1')))))
         " echomsg string(l:clang_output)
     else
         let l:clang_output = s:complete_from_clang_binary(a:cur_keyword_pos, a:cur_keyword_str)
     endif
+
+    call setline('.', l:line)
 
     return l:clang_output
 endfunction
