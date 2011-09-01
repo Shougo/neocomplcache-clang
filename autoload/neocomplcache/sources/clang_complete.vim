@@ -230,7 +230,14 @@ function! s:DemangleProto(prototype)
 endfunction
 
 function! s:source.get_keyword_pos(cur_text)
+    if neocomplcache#is_auto_complete()
+                \ && a:cur_text !~ '\%(->\|\.\|::\)$'
+        " auto complete is very slow!
+        return -1
+    endif
+
     let l:line = getline('.')
+
     let l:start = col('.') - 1
     let l:wsstart = l:start
     if l:line[l:wsstart - 1] =~ '\s'
@@ -250,13 +257,6 @@ function! s:source.get_keyword_pos(cur_text)
 endfunction
 
 function! s:source.get_complete_words(cur_keyword_pos, cur_keyword_str)
-    if neocomplcache#is_auto_complete()
-          \ && getline('.') !~ '\%(->\|\.\|::\)$'
-          " \ && len(a:cur_keyword_str) < g:neocomplcache_auto_completion_start_length
-        " auto complete is very slow!
-        return []
-    endif
-
     if g:neocomplcache_clang_use_library
         python vim.command('let l:clang_output = ' + str(getCurrentCompletions(vim.eval('a:cur_keyword_str'), int(vim.eval('a:cur_keyword_pos+1')))))
         " echomsg string(l:clang_output)
