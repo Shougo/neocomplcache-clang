@@ -112,52 +112,52 @@ endfunction
 function! s:loadUserOptions()
     let b:clang_user_options = ''
 
-    let l:option_sources = split(g:neocomplcache_clang_auto_options, ',')
-    let l:remove_spaces_cmd = 'substitute(v:val, "\\s*\\(.*\\)\\s*", "\\1", "")'
-    let l:option_sources = map(l:option_sources, l:remove_spaces_cmd)
+    let option_sources = split(g:neocomplcache_clang_auto_options, ',')
+    let remove_spaces_cmd = 'substitute(v:val, "\\s*\\(.*\\)\\s*", "\\1", "")'
+    let option_sources = map(option_sources, remove_spaces_cmd)
 
-    for l:source in l:option_sources
-        if l:source == 'path'
+    for source in option_sources
+        if source == 'path'
             call s:parsePathOption()
-        elseif l:source == '.clang_complete'
+        elseif source == '.clang_complete'
             call s:parseConfig()
         endif
     endfor
 endfunction
 
 function! s:parseConfig()
-    let l:local_conf = findfile('.clang_complete', '.;')
-    if l:local_conf == '' || !filereadable(l:local_conf)
+    let local_conf = findfile('.clang_complete', '.;')
+    if local_conf == '' || !filereadable(local_conf)
         return
     endif
 
-    let l:opts = readfile(l:local_conf)
-    for l:opt in l:opts
+    let opts = readfile(local_conf)
+    for opt in opts
         " Better handling of absolute path
         " I don't know if those pattern will work on windows
         " platform
-        if matchstr(l:opt, '\C-I\s*/') != ''
-            let l:opt = substitute(l:opt, '\C-I\s*\(/\%(\w\|\\\s\)*\)',
+        if matchstr(opt, '\C-I\s*/') != ''
+            let opt = substitute(opt, '\C-I\s*\(/\%(\w\|\\\s\)*\)',
                         \ '-I' . '\1', 'g')
         else
-            let l:opt = substitute(l:opt, '\C-I\s*\(\%(\w\|\\\s\)*\)',
-                        \ '-I' . l:local_conf[:-16] . '\1', 'g')
+            let opt = substitute(opt, '\C-I\s*\(\%(\w\|\\\s\)*\)',
+                        \ '-I' . local_conf[:-16] . '\1', 'g')
         endif
-        let b:clang_user_options .= ' ' . l:opt
+        let b:clang_user_options .= ' ' . opt
     endfor
 endfunction
 
 function! s:parsePathOption()
-    let l:dirs = split(&path, ',')
-    for l:dir in l:dirs
-        if len(l:dir) == 0 || !isdirectory(l:dir)
+    let dirs = split(&path, ',')
+    for dir in dirs
+        if len(dir) == 0 || !isdirectory(dir)
             continue
         endif
 
         " Add only absolute paths
-        if matchstr(l:dir, '\s*/') != ''
-            let l:opt = '-I' . l:dir
-            let b:clang_user_options .= ' ' . l:opt
+        if matchstr(dir, '\s*/') != ''
+            let opt = '-I' . dir
+            let b:clang_user_options .= ' ' . opt
         endif
     endfor
 endfunction
@@ -166,15 +166,15 @@ function! s:get_kind(proto)
     if a:proto == ""
         return 't'
     endif
-    let l:ret = match(a:proto, '^\[#')
-    let l:params = match(a:proto, '(')
-    if l:ret == -1 && l:params == -1
+    let ret = match(a:proto, '^\[#')
+    let params = match(a:proto, '(')
+    if ret == -1 && params == -1
         return 't'
     endif
-    if l:ret != -1 && l:params == -1
+    if ret != -1 && params == -1
         return 'v'
     endif
-    if l:params != -1
+    if params != -1
         return 'f'
     endif
     return 'm'
@@ -193,40 +193,40 @@ function! s:source.finalize()
 endfunction
 
 function! s:ClangQuickFix(clang_output)
-    let l:list = []
-    for l:line in a:clang_output
-        let l:erridx = stridx(l:line, "error:")
-        if l:erridx == -1
+    let list = []
+    for line in a:clang_output
+        let erridx = stridx(line, "error:")
+        if erridx == -1
             continue
         endif
-        let l:bufnr = bufnr("%")
-        let l:pattern = '\.*:\(\d*\):\(\d*\):'
-        let tmp = matchstr(l:line, l:pattern)
-        let l:lnum = substitute(tmp, l:pattern, '\1', '')
-        let l:col = substitute(tmp, l:pattern, '\2', '')
-        let l:text = l:line
-        let l:type = 'E'
-        let l:item = {
-                    \ "bufnr": l:bufnr,
-                    \ "lnum": l:lnum,
-                    \ "col": l:col,
-                    \ "text": l:text[l:erridx + 7:],
-                    \ "type": l:type }
-        let l:list = add(l:list, l:item)
+        let bufnr = bufnr("%")
+        let pattern = '\.*:\(\d*\):\(\d*\):'
+        let tmp = matchstr(line, pattern)
+        let lnum = substitute(tmp, pattern, '\1', '')
+        let col = substitute(tmp, pattern, '\2', '')
+        let text = line
+        let type = 'E'
+        let item = {
+                    \ "bufnr": bufnr,
+                    \ "lnum": lnum,
+                    \ "col": col,
+                    \ "text": text[erridx + 7:],
+                    \ "type": type }
+        let list = add(list, item)
     endfor
-    call setqflist(l:list)
+    call setqflist(list)
 endfunction
 
 function! s:DemangleProto(prototype)
-    let l:proto = substitute(a:prototype, '[#', '', 'g')
-    let l:proto = substitute(l:proto, '#]', ' ', 'g')
-    let l:proto = substitute(l:proto, '#>', '', 'g')
-    let l:proto = substitute(l:proto, '<#', '', 'g')
+    let proto = substitute(a:prototype, '[#', '', 'g')
+    let proto = substitute(proto, '#]', ' ', 'g')
+    let proto = substitute(proto, '#>', '', 'g')
+    let proto = substitute(proto, '<#', '', 'g')
     " TODO: add a candidate for each optional parameter
-    let l:proto = substitute(l:proto, '{#', '', 'g')
-    let l:proto = substitute(l:proto, '#}', '', 'g')
+    let proto = substitute(proto, '{#', '', 'g')
+    let proto = substitute(proto, '#}', '', 'g')
 
-    return l:proto
+    return proto
 endfunction
 
 function! s:source.get_keyword_pos(cur_text)
@@ -236,143 +236,143 @@ function! s:source.get_keyword_pos(cur_text)
         return -1
     endif
 
-    let l:line = getline('.')
+    let line = getline('.')
 
-    let l:start = col('.') - 1
-    let l:wsstart = l:start
-    if l:line[l:wsstart - 1] =~ '\s'
-        while l:wsstart > 0 && l:line[l:wsstart - 1] =~ '\s'
-            let l:wsstart -= 1
+    let start = col('.') - 1
+    let wsstart = start
+    if line[wsstart - 1] =~ '\s'
+        while wsstart > 0 && line[wsstart - 1] =~ '\s'
+            let wsstart -= 1
         endwhile
     endif
-    if l:line[l:wsstart - 1] =~ '[(,]'
+    if line[wsstart - 1] =~ '[(,]'
         let b:should_overload = 1
-        return l:wsstart
+        return wsstart
     endif
     let b:should_overload = 0
-    while l:start > 0 && l:line[l:start - 1] =~ '\i'
-        let l:start -= 1
+    while start > 0 && line[start - 1] =~ '\i'
+        let start -= 1
     endwhile
-    return l:start
+    return start
 endfunction
 
 function! s:source.get_complete_words(cur_keyword_pos, cur_keyword_str)
     if g:neocomplcache_clang_use_library
-        python vim.command('let l:clang_output = ' + str(getCurrentCompletions(vim.eval('a:cur_keyword_str'), int(vim.eval('a:cur_keyword_pos+1')))))
-        " echomsg string(l:clang_output)
+        python vim.command('let clang_output = ' + str(getCurrentCompletions(vim.eval('a:cur_keyword_str'), int(vim.eval('a:cur_keyword_pos+1')))))
+        " echomsg string(clang_output)
     else
-        let l:clang_output = s:complete_from_clang_binary(a:cur_keyword_pos, a:cur_keyword_str)
+        let clang_output = s:complete_from_clang_binary(a:cur_keyword_pos, a:cur_keyword_str)
     endif
 
-    return l:clang_output
+    return clang_output
 endfunction
 
 function! s:complete_from_clang_binary(cur_keyword_pos, cur_keyword_str)
-    let l:buf = getline(1, '$')
-    let l:tempfile = expand('%:p:h') . '/' . localtime() . expand('%:t')
+    let buf = getline(1, '$')
+    let tempfile = expand('%:p:h') . '/' . localtime() . expand('%:t')
     if neocomplcache#is_win()
-        let l:tempfile = substitute(l:tempfile, '\\', '/', 'g')
+        let tempfile = substitute(tempfile, '\\', '/', 'g')
     endif
-    call writefile(l:buf, l:tempfile)
-    let l:escaped_tempfile = shellescape(l:tempfile)
+    call writefile(buf, tempfile)
+    let escaped_tempfile = shellescape(tempfile)
 
-    let l:command = b:clang_exec . ' -cc1 -fsyntax-only'
+    let command = b:clang_exec . ' -cc1 -fsyntax-only'
                 \ . ' -fno-caret-diagnostics -fdiagnostics-print-source-range-info'
                 \ . ' -code-completion-at='
-                \ . l:escaped_tempfile . ":" . line('.') . ":" . (a:cur_keyword_pos+1)
-                \ . ' ' . l:escaped_tempfile
+                \ . escaped_tempfile . ":" . line('.') . ":" . (a:cur_keyword_pos+1)
+                \ . ' ' . escaped_tempfile
                 \ . ' ' . b:clang_parameters . ' ' . b:clang_user_options . ' ' . g:neocomplcache_clang_user_options
-    let l:clang_output = split(neocomplcache#system(l:command), '\n')
+    let clang_output = split(neocomplcache#system(command), '\n')
 
-    call delete(l:tempfile)
+    call delete(tempfile)
 
-    let l:filter_str = "v:val =~ '^COMPLETION: " . a:cur_keyword_str . "\\|^OVERLOAD: '"
-    call filter(l:clang_output, l:filter_str)
+    let filter_str = "v:val =~ '^COMPLETION: " . a:cur_keyword_str . "\\|^OVERLOAD: '"
+    call filter(clang_output, filter_str)
 
-    let l:res = []
-    for l:line in l:clang_output
+    let res = []
+    for line in clang_output
 
-        if l:line[:11] == 'COMPLETION: ' && b:should_overload != 1
+        if line[:11] == 'COMPLETION: ' && b:should_overload != 1
 
-            let l:value = l:line[12:]
+            let value = line[12:]
 
-            let l:colonidx = stridx(l:value, ' : ')
-            if l:colonidx == -1
-                let l:wabbr = s:DemangleProto(l:value)
-                let l:word = l:value
-                let l:proto = l:value
+            let colonidx = stridx(value, ' : ')
+            if colonidx == -1
+                let wabbr = s:DemangleProto(value)
+                let word = value
+                let proto = value
             else
-                let l:word = l:value[:l:colonidx - 1]
+                let word = value[:l:colonidx - 1]
                 " WTF is that?
-                if l:word =~ '(Hidden)'
-                    let l:word = l:word[:-10]
+                if word =~ '(Hidden)'
+                    let word = word[:-10]
                 endif
-                let l:wabbr = l:word
-                let l:proto = l:value[l:colonidx + 3:]
+                let wabbr = word
+                let proto = value[colonidx + 3:]
             endif
 
-            let l:kind = s:GetKind(l:proto)
-            if l:kind == 't' && getline('.') =~ '\%(->\|\.\|::\)$'
+            let kind = s:GetKind(proto)
+            if kind == 't' && getline('.') =~ '\%(->\|\.\|::\)$'
                 continue
             endif
 
-            let l:word = l:wabbr
-            let l:proto = s:DemangleProto(l:proto)
+            let word = wabbr
+            let proto = s:DemangleProto(proto)
 
-        elseif l:line[:9] == 'OVERLOAD: ' && b:should_overload == 1
+        elseif line[:9] == 'OVERLOAD: ' && b:should_overload == 1
 
-            let l:value = l:line[10:]
-            if match(l:value, '<#') == -1
+            let value = line[10:]
+            if match(value, '<#') == -1
                 continue
             endif
-            let l:word = substitute(l:value, '.*<#', '<#', 'g')
-            let l:word = substitute(l:word, '#>.*', '#>', 'g')
-            let l:wabbr = substitute(l:word, '<#\([^#]*\)#>', '\1', 'g')
-            let l:proto = s:DemangleProto(l:value)
-            let l:kind = ''
+            let word = substitute(value, '.*<#', '<#', 'g')
+            let word = substitute(word, '#>.*', '#>', 'g')
+            let wabbr = substitute(word, '<#\([^#]*\)#>', '\1', 'g')
+            let proto = s:DemangleProto(value)
+            let kind = ''
         else
             continue
         endif
 
-        let l:item = {
-                    \ 'word': l:word,
-                    \ 'abbr': l:wabbr,
-                    \ 'menu': l:proto,
-                    \ 'info': l:proto,
+        let item = {
+                    \ 'word': word,
+                    \ 'abbr': wabbr,
+                    \ 'menu': proto,
+                    \ 'info': proto,
                     \ 'dup': 1,
-                    \ 'kind': l:kind }
+                    \ 'kind': kind }
 
-        call add(l:res, l:item)
+        call add(res, item)
     endfor
 
-    return l:res
+    return res
 endfunction
 
 function! s:GetKind(proto)
   if a:proto == ''
     return 't'
   endif
-  let l:ret = match(a:proto, '^\[#')
-  let l:params = match(a:proto, '(')
-  if l:ret == -1 && l:params == -1
+  let ret = match(a:proto, '^\[#')
+  let params = match(a:proto, '(')
+  if ret == -1 && params == -1
     return 't'
   endif
-  if l:ret != -1 && l:params == -1
+  if ret != -1 && params == -1
     return 'v'
   endif
-  if l:params != -1
+  if params != -1
     return 'f'
   endif
   return 'm'
 endfunction
 
 function! s:DemangleProto(prototype)
-  let l:proto = substitute(a:prototype, '[#', '', 'g')
-  let l:proto = substitute(l:proto, '#]', ' ', 'g')
-  let l:proto = substitute(l:proto, '#>', '', 'g')
-  let l:proto = substitute(l:proto, '<#', '', 'g')
-  let l:proto = substitute(l:proto, '{#.*#}', '', 'g')
-  return l:proto
+  let proto = substitute(a:prototype, '[#', '', 'g')
+  let proto = substitute(proto, '#]', ' ', 'g')
+  let proto = substitute(proto, '#>', '', 'g')
+  let proto = substitute(proto, '<#', '', 'g')
+  let proto = substitute(proto, '{#.*#}', '', 'g')
+  return proto
 endfunction
 
 function! neocomplcache#sources#clang_complete#define()
