@@ -20,7 +20,7 @@
 
 " Variables initialize.
 if !exists('g:neocomplcache_clang_use_library')
-  let g:neocomplcache_clang_use_library = 0
+    let g:neocomplcache_clang_use_library = 0
 endif
 if !exists('g:neocomplcache_clang_macros')
     let g:neocomplcache_clang_macros = 0
@@ -39,30 +39,30 @@ if !exists('g:neocomplcache_clang_debug')
 endif
 
 let s:source = {
-      \ 'name': 'clang_complete',
-      \ 'kind': 'ftplugin',
-      \ 'filetypes': { 'c': 1, 'cpp': 1, 'objc': 1, 'objcpp': 1 },
-      \ }
+            \ 'name': 'clang_complete',
+            \ 'kind': 'ftplugin',
+            \ 'filetypes': { 'c': 1, 'cpp': 1, 'objc': 1, 'objcpp': 1 },
+            \ }
 
 " Store plugin path, as this is available only when sourcing the file,
 " not during a function call.
 let s:plugin_path = escape(expand('<sfile>:p:h'), '\')
 
 function! s:init_ClangCompletePython()
-  python import sys
+    python import sys
 
-  if exists('g:neocomplcache_clang_library_path')
-    " Load the library from the given library path.
-    execute 'python sys.argv = ["' . escape(g:neocomplcache_clang_library_path, '\') . '"]'
-  else
-    " By setting argv[0] to '' force the python bindings to load the library
-    " from the normal system search path.
-    python sys.argv[0] = ''
-  endif
+    if exists('g:neocomplcache_clang_library_path')
+        " Load the library from the given library path.
+        execute 'python sys.argv = ["' . escape(g:neocomplcache_clang_library_path, '\') . '"]'
+    else
+        " By setting argv[0] to '' force the python bindings to load the library
+        " from the normal system search path.
+        python sys.argv[0] = ''
+    endif
 
-  execute 'python sys.path = ["' . s:plugin_path . '/clang_complete"] + sys.path'
-  execute 'pyfile ' . s:plugin_path . '/clang_complete/libclang.py'
-  python initClangComplete(vim.eval('g:neocomplcache_clang_lib_flags'))
+    execute 'python sys.path = ["' . s:plugin_path . '/clang_complete"] + sys.path'
+    execute 'pyfile ' . s:plugin_path . '/clang_complete/libclang.py'
+    python initClangComplete(vim.eval('g:neocomplcache_clang_lib_flags'))
 endfunction
 
 function! s:init_ClangComplete()
@@ -97,15 +97,15 @@ function! s:init_ClangComplete()
 
     " Load the python bindings of libclang.
     if g:neocomplcache_clang_use_library
-      if has('python')
-        call s:init_ClangCompletePython()
-      else
-        echoe 'clang_complete: No python support available.'
-        echoe 'Cannot use clang library, using executable'
-        echoe 'Compile vim with python support to use libclang'
-        let g:neocomplcache_clang_use_library = 0
-        return
-      endif
+        if has('python')
+            call s:init_ClangCompletePython()
+        else
+            echoe 'clang_complete: No python support available.'
+            echoe 'Cannot use clang library, using executable'
+            echoe 'Compile vim with python support to use libclang'
+            let g:neocomplcache_clang_use_library = 0
+            return
+        endif
     endif
 endfunction
 
@@ -257,6 +257,10 @@ function! s:source.get_keyword_pos(cur_text)
 endfunction
 
 function! s:source.get_complete_words(cur_keyword_pos, cur_keyword_str)
+    if bufname('%') == ''
+        return []
+    endif
+
     if g:neocomplcache_clang_use_library
         python vim.command('let clang_output = ' + str(getCurrentCompletions(vim.eval('a:cur_keyword_str'), int(vim.eval('a:cur_keyword_pos+1')))))
         " echomsg string(clang_output)
@@ -349,34 +353,34 @@ function! s:complete_from_clang_binary(cur_keyword_pos, cur_keyword_str)
 endfunction
 
 function! s:GetKind(proto)
-  if a:proto == ''
-    return 't'
-  endif
-  let ret = match(a:proto, '^\[#')
-  let params = match(a:proto, '(')
-  if ret == -1 && params == -1
-    return 't'
-  endif
-  if ret != -1 && params == -1
-    return 'v'
-  endif
-  if params != -1
-    return 'f'
-  endif
-  return 'm'
+    if a:proto == ''
+        return 't'
+    endif
+    let ret = match(a:proto, '^\[#')
+    let params = match(a:proto, '(')
+    if ret == -1 && params == -1
+        return 't'
+    endif
+    if ret != -1 && params == -1
+        return 'v'
+    endif
+    if params != -1
+        return 'f'
+    endif
+    return 'm'
 endfunction
 
 function! s:DemangleProto(prototype)
-  let proto = substitute(a:prototype, '[#', '', 'g')
-  let proto = substitute(proto, '#]', ' ', 'g')
-  let proto = substitute(proto, '#>', '', 'g')
-  let proto = substitute(proto, '<#', '', 'g')
-  let proto = substitute(proto, '{#.*#}', '', 'g')
-  return proto
+    let proto = substitute(a:prototype, '[#', '', 'g')
+    let proto = substitute(proto, '#]', ' ', 'g')
+    let proto = substitute(proto, '#>', '', 'g')
+    let proto = substitute(proto, '<#', '', 'g')
+    let proto = substitute(proto, '{#.*#}', '', 'g')
+    return proto
 endfunction
 
 function! neocomplcache#sources#clang_complete#define()
     return s:source
 endfunction
 
-" vim: expandtab:ts=4:sts=4:sw=4
+" vim: expandtab:ts=2:sts=2:sw=2
