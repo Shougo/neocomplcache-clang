@@ -47,7 +47,7 @@ def getCurrentFile():
 
 def getCurrentTranslationUnit(update = False):
   userOptionsGlobal = splitOptions(vim.eval("g:neocomplcache_clang_user_options"))
-  userOptionsLocal = splitOptions(vim.eval("b:clang_user_options"))
+  userOptionsLocal = splitOptions(vim.eval("b:neocomplcache_clang_user_options"))
   args = userOptionsGlobal + userOptionsLocal
 
   currentFile = getCurrentFile()

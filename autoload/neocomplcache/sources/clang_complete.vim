@@ -110,7 +110,7 @@ function! s:init_ClangComplete()
 endfunction
 
 function! s:loadUserOptions()
-  let b:clang_user_options = ''
+  let b:neocomplcache_clang_user_options = ''
 
   let option_sources = split(g:neocomplcache_clang_auto_options, ',')
   let remove_spaces_cmd = 'substitute(v:val, "\\s*\\(.*\\)\\s*", "\\1", "")'
@@ -143,7 +143,7 @@ function! s:parseConfig()
       let opt = substitute(opt, '\C-I\s*\(\%(\w\|\\\s\)*\)',
             \ '-I' . local_conf[:-16] . '\1', 'g')
     endif
-    let b:clang_user_options .= ' ' . opt
+    let b:neocomplcache_clang_user_options .= ' ' . opt
   endfor
 endfunction
 
@@ -157,7 +157,7 @@ function! s:parsePathOption()
     " Add only absolute paths
     if matchstr(dir, '\s*/') != ''
       let opt = '-I' . dir
-      let b:clang_user_options .= ' ' . opt
+      let b:neocomplcache_clang_user_options .= ' ' . opt
     endif
   endfor
 endfunction
@@ -285,7 +285,7 @@ function! s:complete_from_clang_binary(cur_keyword_pos, cur_keyword_str)
         \ . ' -code-completion-at='
         \ . escaped_tempfile . ":" . line('.') . ":" . (a:cur_keyword_pos+1)
         \ . ' ' . escaped_tempfile
-        \ . ' ' . b:clang_parameters . ' ' . b:clang_user_options . ' ' . g:neocomplcache_clang_user_options
+        \ . ' ' . b:clang_parameters . ' ' . b:neocomplcache_clang_user_options . ' ' . g:neocomplcache_clang_user_options
   let clang_output = split(neocomplcache#system(command), '\n')
 
   call delete(tempfile)
