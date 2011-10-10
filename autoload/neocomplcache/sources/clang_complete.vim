@@ -19,24 +19,18 @@
 "
 
 " Variables initialize.
-if !exists('g:neocomplcache_clang_use_library')
-  let g:neocomplcache_clang_use_library = 0
-endif
-if !exists('g:neocomplcache_clang_macros')
-  let g:neocomplcache_clang_macros = 0
-endif
-if !exists('g:neocomplcache_clang_patterns')
-  let g:neocomplcache_clang_patterns = 0
-endif
-if !exists('g:neocomplcache_clang_auto_options')
-  let g:neocomplcache_clang_auto_options = 'path, .clang_complete'
-endif
-if !exists('g:neocomplcache_clang_user_options')
-  let g:neocomplcache_clang_user_options = ''
-endif
-if !exists('g:neocomplcache_clang_debug')
-  let g:neocomplcache_clang_debug = 0
-endif
+let g:neocomplcache_clang_use_library =
+      \ get(g:, 'neocomplcache_clang_use_library', 0)
+let g:neocomplcache_clang_macros =
+      \ get(g:, 'neocomplcache_clang_macros', 0)
+let g:neocomplcache_clang_patterns =
+      \ get(g:, 'neocomplcache_clang_patterns', 0)
+let g:neocomplcache_clang_auto_options =
+      \ get(g:, 'neocomplcache_clang_auto_options', 'path, .clang_complete')
+let g:neocomplcache_clang_user_options =
+      \ get(g:, 'neocomplcache_clang_user_options', '')
+let g:neocomplcache_clang_debug =
+      \ get(g:, 'neocomplcache_clang_debug', 0)
 
 let s:source = {
       \ 'name': 'clang_complete',
