@@ -380,7 +380,7 @@ function! s:DemangleProto(prototype)
 endfunction
 
 function! neocomplcache#sources#clang_complete#define()
-  return s:source
+  return executable('clang') ? s:source : {}
 endfunction
 
 " vim: expandtab:ts=2:sts=2:sw=2
