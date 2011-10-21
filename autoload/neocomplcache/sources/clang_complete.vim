@@ -28,6 +28,8 @@ let g:neocomplcache_clang_user_options =
       \ get(g:, 'neocomplcache_clang_user_options', '')
 let g:neocomplcache_clang_debug =
       \ get(g:, 'neocomplcache_clang_debug', 0)
+let g:neocomplcache_clang_executable_path =
+      \ get(g:, 'neocomplcache_clang_library_path', 'clang')
 
 let s:source = {
       \ 'name': 'clang_complete',
@@ -61,7 +63,7 @@ function! s:init_ClangComplete()
 
   call s:loadUserOptions()
 
-  let b:clang_exec = 'clang'
+  let b:clang_exec = g:neocomplcache_clang_executable_path
   let b:clang_parameters = '-x c'
 
   if &filetype == 'objc'
