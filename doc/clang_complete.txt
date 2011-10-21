@@ -1,0 +1,145 @@
+*clang_complete.txt*	clang_complete for neocomplcache
+
+Version: 0.1
+Author: Xavier Deguillard <deguilx@gmail.com>
+Modified by: eagletmt <eagletmt@gmail.com>
+             Shougo Matsushita <Shougo.Matsu At gmail.com>
+
+CONTENTS					*clang_complete-contents*
+
+Introduction		|clang_complete-introduction|
+Usage			|clang_complete-usage|
+Install			|clang_complete-install|
+Interface		|clang_complete-interface|
+  Variables		  |clang_complete-variables|
+Configulation Examples	|clang_complete-examples|
+Changelog		|clang_complete-changelog|
+
+==============================================================================
+INTRODUCTION					*clang_complete-introduction*
+
+Original *clang_complete* (https://github.com/Rip-Rip/clang_complete) is good
+auto complete plugin.  But it has some problems.
+
+ * clang_complete use completefunc
+   neocomplcache also use completefunc, so conflicted.
+
+ * clang_complete doesn't use autoload
+   plugin/clang_complete is loaded in all filetypes...
+
+ * clang_complete implemented auto completion manually.
+
+This plugin is based on clang_complete.
+But the problem is solved.
+
+==============================================================================
+USAGE						*clang_complete-usage*
+
+Refer to setting examples:
+|clang_complete-examples|
+
+This plugin enables in C++/C/Objective C/Objective C++.
+But enabled auto complete, in "->" or "." or "::" context.
+If you want to complete other context, please use
+|neocomplcache#start_manual_complete()| mappings.
+
+==============================================================================
+INSTALL						*clang_complete-install*
+
+This plugin requires |neocomplcache| plugin.
+https://github.com/Shougo/neocomplcache
+Please install before.
+
+And requires clang executable file in $PATH.
+http://clang.llvm.org/
+
+==============================================================================
+INTERFACE					*clang_complete-interface*
+
+------------------------------------------------------------------------------
+VARIABLES 					*clang_complete-variables*
+
+g:neocomplcache_clang_use_library			*g:neocomplcache_clang_use_library*
+		This variable whether clang_complete use clang
+		library(clang.dll or libclang.so or libclang.dylib).
+		If this option is enabled, clang_complete will be faster. But
+		required clang library(You may compile clang manually).
+		And this option requires python interface in Vim.
+		Please check ":echo has('python')" command.
+		
+		Default value is 0.
+
+g:neocomplcache_clang_library_path			*g:neocomplcache_clang_library_path*
+		This option load clang library path.
+		If this option is not defined, clang_complete is detect the
+		library.
+		
+		Default library path is (clang.dll or libclang.so or
+		libclang.dylib).
+
+g:neocomplcache_clang_macros				*g:neocomplcache_clang_macros*
+		This variable whether clang use "-code-completion-macros"
+		option. If variable is non-zero, use this option.
+		
+		Default value is 0.
+
+g:neocomplcache_clang_patterns				*g:neocomplcache_clang_patterns*
+		This variable whether clang use "-code-completion-patterns"
+		option. If variable is non-zero, use this option.
+		
+		Default value is 0.
+
+g:neocomplcache_clang_auto_options			*g:neocomplcache_clang_auto_options*
+		This option is comma separated.
+		If this option contains "path", clang_complete detect 'path'
+		option.
+		If this option contains ".clang_complete", clang_complete
+		will analyze ".clang_complete" file.
+		.clang_complete file is line separated "clang" options.
+>
+		-I "some path"
+		-I "some path"
+		...
+<
+		
+		Default value is "path, .clang_complete".
+
+g:neocomplcache_clang_user_options			*g:neocomplcache_clang_user_options*
+		This variable is spaces separated "clang" options.
+		You can set default include path in this option.
+
+		Default value is "".
+
+b:neocomplcache_clang_user_options			*g:neocomplcache_clang_user_options*
+		This option is same |g:neocomplcache_clang_user_options|
+		variable. But it is buffer local.
+		
+		Default value is 0.
+
+g:neocomplcache_clang_debug				*g:neocomplcache_clang_debug*
+		This variable whether enable debug message.
+		
+		Default value is 0.
+
+==============================================================================
+EXAMPLES					*clang_complete-examples*
+>
+	" Use clang dll.
+	let g:neocomplcache_clang_use_library = 1
+	" More user include path.
+	let g:neocomplcache_clang_user_options =
+	\ '-I C:/MinGW/lib/gcc/mingw32/xxx/include '.
+	\ '-I C:/lib/boost_xxx '.
+	\ '-fms-extensions -fgnu-runtime '.
+	\ '-include malloc.h '
+	" More neocomplcache candidates.
+	let g:neocomplcache_max_list = 300
+<
+==============================================================================
+CHANGELOG					*clang_complete-changelog*
+
+2011-10-21
+- Added documentation.
+
+==============================================================================
+vim:tw=78:ts=8:ft=help:norl:noet:fen:fdl=0:

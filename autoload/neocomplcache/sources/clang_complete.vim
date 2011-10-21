@@ -14,9 +14,6 @@
 "                absolute include path on the same line. It is not
 "                currently correctly handled.
 "
-" Todo: - Fix bugs
-"       - Add snippets on Pattern and OVERLOAD (is it possible?)
-"
 
 " Variables initialize.
 let g:neocomplcache_clang_use_library =
