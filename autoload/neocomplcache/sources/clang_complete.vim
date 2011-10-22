@@ -63,7 +63,6 @@ function! s:init_ClangComplete()
 
   call s:loadUserOptions()
 
-  let b:clang_exec = g:neocomplcache_clang_executable_path
   let b:clang_parameters = '-x c'
 
   if &filetype == 'objc'
@@ -265,6 +264,10 @@ function! s:source.get_complete_words(cur_keyword_pos, cur_keyword_str)
 endfunction
 
 function! s:complete_from_clang_binary(cur_keyword_pos, cur_keyword_str)
+  if !executable(g:neocomplcache_clang_executable_path)
+    return []
+  endif
+
   let buf = getline(1, '$')
   let tempfile = expand('%:p:h') . '/' . localtime() . expand('%:t')
   if neocomplcache#is_win()
@@ -273,7 +276,7 @@ function! s:complete_from_clang_binary(cur_keyword_pos, cur_keyword_str)
   call writefile(buf, tempfile)
   let escaped_tempfile = shellescape(tempfile)
 
-  let command = b:clang_exec . ' -cc1 -fsyntax-only'
+  let command = g:neocomplcache_clang_executable_path . ' -cc1 -fsyntax-only'
         \ . ' -fno-caret-diagnostics -fdiagnostics-print-source-range-info'
         \ . ' -code-completion-at='
         \ . escaped_tempfile . ":" . line('.') . ":" . (a:cur_keyword_pos+1)
@@ -373,7 +376,7 @@ function! s:DemangleProto(prototype)
 endfunction
 
 function! neocomplcache#sources#clang_complete#define()
-  return executable('clang') ? s:source : {}
+  return s:source
 endfunction
 
 " vim: expandtab:ts=2:sts=2:sw=2
