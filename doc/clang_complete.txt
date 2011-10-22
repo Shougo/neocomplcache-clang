@@ -117,7 +117,7 @@ g:neocomplcache_clang_user_options			*g:neocomplcache_clang_user_options*
 
 		Default value is "".
 
-b:neocomplcache_clang_user_options			*g:neocomplcache_clang_user_options*
+b:neocomplcache_clang_user_options			*b:neocomplcache_clang_user_options*
 		This option is same |g:neocomplcache_clang_user_options|
 		variable. But it is buffer local.
 		
@@ -144,6 +144,9 @@ EXAMPLES					*clang_complete-examples*
 <
 ==============================================================================
 CHANGELOG					*clang_complete-changelog*
+
+2011-10-22
+- Fixed tag.
 
 2011-10-21
 - Added documentation.
