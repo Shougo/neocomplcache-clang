@@ -223,7 +223,7 @@ endfunction
 
 function! s:source.get_keyword_pos(cur_text)
   if neocomplcache#is_auto_complete()
-        \ && a:cur_text !~ '\%(->\|\.\|::\)$'
+        \ && a:cur_text !~ '\%(->\|\.\|::\)\%(\h\w*\)\?$'
     " auto complete is very slow!
     return -1
   endif

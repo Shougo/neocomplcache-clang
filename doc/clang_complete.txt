@@ -145,6 +145,9 @@ EXAMPLES					*clang_complete-examples*
 ==============================================================================
 CHANGELOG					*clang_complete-changelog*
 
+2011-10-25
+- Fixed for complete check.
+
 2011-10-22
 - Fixed tag.
 - Fixed clang_complete initialize.
